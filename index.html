@@ -30,7 +30,7 @@
         <div class="animate-marquee">
             <span class="mx-6">✨ ENVÍOS A TODO COLOMBIA</span>
             <span class="mx-6">•</span>
-            <span class="mx-6">PIEZAS UNICAS CON SIGNIFICADO</span>
+            <span class="mx-6">PIEZAS ÚNICAS CON SIGNIFICADO</span>
             <span class="mx-6">•</span>
             <span class="mx-6">COMPRA 100% SEGURA</span>
             <span class="mx-6">•</span>
@@ -38,7 +38,7 @@
             <span class="mx-6">•</span>
             <span class="mx-6">✨ ENVÍOS A TODO COLOMBIA</span>
             <span class="mx-6">•</span>
-            <span class="mx-6">PIEZAS UNICAS CON SIGNIFICADO</span>
+            <span class="mx-6">PIEZAS ÚNICAS CON SIGNIFICADO</span>
             <span class="mx-6">•</span>
             <span class="mx-6">COMPRA 100% SEGURA</span>
             <span class="mx-6">•</span>
@@ -66,4 +66,43 @@
     </header>
 
     <!-- VISTA 1: CATÁLOGO -->
-    <main x-show="currentView ===
+    <main x-show="currentView === 'catalog'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+        <!-- BANNER DE ENCABEZADO -->
+        <div class="bg-white border border-neutral-200 p-8 sm:p-12 mb-10 text-center max-w-4xl mx-auto">
+            <span class="text-[10px] tracking-widest uppercase font-bold text-neutral-400 bg-neutral-100 px-3 py-1 rounded-full">Colección Exclusiva</span>
+            <h1 class="text-3xl sm:text-5xl font-light text-neutral-900 mt-4 mb-4 tracking-tight">Lleva lo que amas siempre cerca</h1>
+            <p class="text-neutral-500 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">Piezas artesanales personalizadas creadas para inmortalizar miradas, momentos y seres queridos.</p>
+        </div>
+
+        <!-- FILTROS Y BÚSQUEDA -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 border-b border-neutral-200 pb-6">
+            <div class="flex flex-wrap gap-2 justify-center">
+                <template x-for="cat in categories" :key="cat">
+                    <button @click="selectedCategory = cat" 
+                            :class="selectedCategory === cat ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'"
+                            class="px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition" 
+                            x-text="cat"></button>
+                </template>
+            </div>
+            <div class="w-full md:w-72">
+                <input type="text" x-model="searchQuery" placeholder="Buscar en Vínculo..." class="w-full px-4 py-2 rounded-full border border-neutral-300 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white">
+            </div>
+        </div>
+
+        <!-- GRILLA DE PRODUCTOS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <template x-for="product in filteredProducts()" :key="product.id">
+                <div class="bg-white border border-neutral-200 overflow-hidden group hover:border-neutral-400 transition flex flex-col justify-between">
+                    <div>
+                        <div class="relative aspect-square overflow-hidden bg-neutral-100 cursor-pointer" @click="openProduct(product)">
+                            <img :src="product.image" :alt="product.name" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-neutral-900 text-[10px] font-bold tracking-wider uppercase px-3 py-1 border border-neutral-200" x-text="product.category"></span>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-semibold text-neutral-900 text-base mb-1 cursor-pointer hover:underline" @click="openProduct(product)" x-text="product.name"></h3>
+                            <p class="text-neutral-500 text-xs mb-4 line-clamp-2 leading-relaxed" x-text="product.description"></p>
+                            <span class="text-neutral-900 font-bold text-lg" x-text="formatPrice(product.price)"></span>
+                        </div>
+                    </div>
+                    <div class="p-6 pt-0 flex gap-2">
+                        <button @click="openProduct(product)" class="flex-1 border border-neutral-900 text-neutral-900 py-
