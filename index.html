@@ -1,182 +1,884 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vínculo | Joyas & Recuerdos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Poppins', sans-serif; }
-    </style>
-</head>
-<body class="bg-neutral-50 text-neutral-800 antialiased" x-data="store()">
+import React, { useState } from 'react';
+import { 
+  ShoppingBag, 
+  Search, 
+  ArrowLeft, 
+  Trash2, 
+  ChevronRight, 
+  Upload, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Truck, 
+  SlidersHorizontal
+} from 'lucide-react';
 
-    <!-- BARRA SUPERIOR -->
-    <div class="bg-neutral-900 text-neutral-200 text-xs sm:text-sm py-2 px-4 text-center font-medium tracking-wide">
-        ✨ Envíos a todo Colombia! Pago Anticipado ($18.000) o Contra Entrega ($20.000) ✨
-    </div>
+export default function App() {
+  // Rutas: 'catalog' | 'product' | 'cart' | 'checkout' | 'success'
+  const [currentRoute, setCurrentRoute] = useState('catalog');
+  const [selectedProductId, setSelectedProductId] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  
+  // Estado del Carrito
+  const [cart, setCart] = useState([
+    {
+      id: 1,
+      name: 'Collar Mirada Eterna',
+      price: 35000,
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop',
+      category: 'Joyas de Miradas',
+      quantity: 1,
+      customNote: 'Foto de mirada adjuntada (Ojo Derecho)',
+    }
+  ]);
 
-    <!-- NAVEGACIÓN -->
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md shadow-sm border-b border-neutral-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <span class="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm">V</span>
-                <span class="text-xl font-bold tracking-wider text-neutral-900">VÍNCULO</span>
-            </div>
-            <button @click="cartOpen = true" class="relative flex items-center gap-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 px-4 py-2 rounded-full transition text-sm font-medium">
-                <span>Carrito</span>
-                <span class="bg-neutral-900 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold" x-text="cartCount">0</span>
-            </button>
+  // Estado del Formulario Checkout
+  const [formData, setFormData] = useState({
+    nombre: '',
+    telefono: '',
+    ciudad: '',
+    direccion: '',
+    metodoPago: 'anticipado',
+    notas: ''
+  });
+
+  // Estado de personalización de producto activo
+  const [customText, setCustomText] = useState('');
+  const [customFileUploaded, setCustomFileUploaded] = useState(false);
+
+  const categories = [
+    'Todos',
+    'Joyas de Miradas',
+    'Cuadros Personalizados',
+    'Llaveros e Imanes',
+    'Velas & Eventos'
+  ];
+
+  const products = [
+    {
+      id: 1,
+      slug: 'collar-mirada-eterna',
+      name: 'Collar Mirada Eterna',
+      category: 'Joyas de Miradas',
+      price: 35000,
+      tag: 'Más Vendido',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop',
+      description: 'Dije circular en acero quirúrgico hipoalergénico pulido con bisel fino y encapsulado en resina UV de alta claridad. Inmortaliza la mirada exacta de tu persona especial o mascota con nitidez eterna.',
+      customizationType: 'photo',
+      details: ['Material: Acero Quirúrgico 316L', 'Cadena: 45cm + 5cm extensible', 'Resistencia al agua: Resiste salpicaduras', 'Garantía: 6 meses por desgaste']
+    },
+    {
+      id: 2,
+      slug: 'pulsera-mirada-minimal',
+      name: 'Pulsera Mirada Minimal',
+      category: 'Joyas de Miradas',
+      price: 28000,
+      tag: 'Nuevo',
+      image: 'https://images.unsplash.com/photo-1611591470671-3078415ab55e?q=80&w=800&auto=format&fit=crop',
+      description: 'Manilla fina de eslabón italiano con dije central sobrio de mirada personalizada. Diseñada para un uso diario sutil que aporta significado profundo sin cargar tu estilo.',
+      customizationType: 'photo',
+      details: ['Material: Acero y Plata 925', 'Medida ajustable: 16cm a 21cm', 'Acabado: Espejo alto brillo']
+    },
+    {
+      id: 3,
+      slug: 'cuadro-galeria-bn',
+      name: 'Cuadro Galería B&N (20x25cm)',
+      category: 'Cuadros Personalizados',
+      price: 48000,
+      tag: 'Personalizado',
+      image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=800&auto=format&fit=crop',
+      description: 'Fotografía profesional procesada en alto contraste monocromático, impresa en papel de museo de 250g con paspartú blanco mate de 3cm y marco de madera maciza en acabado negro pulido.',
+      customizationType: 'photo_text',
+      details: ['Dimensiones totales: 23x28cm', 'Marco: Madera maciza negra', 'Cristal: Vidrio antireflectivo de 2mm', 'Listo para colgar']
+    },
+    {
+      id: 4,
+      slug: 'llavero-placa-relieve',
+      name: 'Llavero Placa Relieve Grises',
+      category: 'Llaveros e Imanes',
+      price: 18000,
+      tag: 'Popular',
+      image: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=800&auto=format&fit=crop',
+      description: 'Placa rectangular en resina de grano mate con relieve tipográfico. Ideal para llevar coordenadas, iniciales o una fecha inolvidable de forma limpia.',
+      customizationType: 'text',
+      details: ['Dimensiones: 4.5 x 1.8 cm', 'Herraje: Anilla reforzada en acero rotativo']
+    },
+    {
+      id: 5,
+      slug: 'set-imanes-recuerdo',
+      name: 'Set Imanes de Recuerdo (4 uds)',
+      category: 'Llaveros e Imanes',
+      price: 24000,
+      tag: 'Edición Especial',
+      image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop',
+      description: 'Cuatro imanes rígidos cuadrados con acabado sutil mate. Fotografías procesadas con estética limpia para superficies metálicas.',
+      customizationType: 'photo',
+      details: ['Incluye 4 unidades', 'Tamaño: 5x5cm cada uno', 'Imán magnético de alta fijación posterior']
+    },
+    {
+      id: 6,
+      slug: 'vela-aromatica-soya-eventos',
+      name: 'Vela Aromática Soya (Min. 20u)',
+      category: 'Velas & Eventos',
+      price: 12000,
+      tag: 'Corporativo / Eventos',
+      image: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=800&auto=format&fit=crop',
+      description: 'Vela artesanal en contenedor cerámico o cristal neutro con cera de soya 100% botánica y esencias finas. Etiqueta personalizada minimalista para recuerdos de boda o eventos especiales.',
+      customizationType: 'text',
+      details: ['Pedido mínimo: 20 unidades', 'Duración de quemado: ~25 horas por unidad', 'Aromas a elegir: Vainilla Negra / Té Blanco / Salvia']
+    }
+  ];
+
+  const currentProduct = products.find(p => p.id === selectedProductId) || products[0];
+
+  const filteredProducts = selectedCategory === 'Todos'
+    ? products
+    : products.filter(p => p.category === selectedCategory);
+
+  // Funciones de Carrito
+  const addToCart = (product, note = '') => {
+    setCart(prev => {
+      const exists = prev.find(item => item.id === product.id);
+      if (exists) {
+        return prev.map(item => 
+          item.id === product.id 
+            ? { ...item, quantity: item.quantity + 1, customNote: note || item.customNote } 
+            : item
+        );
+      }
+      return [...prev, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        quantity: 1,
+        customNote: note || (customFileUploaded ? 'Foto personalizada cargada' : customText ? `Texto: ${customText}` : 'Sin personalización extra')
+      }];
+    });
+    setCurrentRoute('cart');
+  };
+
+  const updateQuantity = (id, delta) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = item.quantity + delta;
+        return newQty > 0 ? { ...item, quantity: newQty } : item;
+      }
+      return item;
+    }));
+  };
+
+  const removeFromCart = (id) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const formatPrice = (amount) => {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
+  };
+
+  const navigateToProduct = (id) => {
+    setSelectedProductId(id);
+    setCustomText('');
+    setCustomFileUploaded(false);
+    setCurrentRoute('product');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSendWhatsApp = (e) => {
+    e.preventDefault();
+    const phone = '573000000000'; // Número de WhatsApp objetivo
+    let msg = `*NUEVO PEDIDO - VÍNCULO*\n\n`;
+    msg += `*Cliente:* ${formData.nombre}\n`;
+    msg += `*Teléfono:* ${formData.telefono}\n`;
+    msg += `*Ciudad:* ${formData.ciudad}\n`;
+    msg += `*Dirección:* ${formData.direccion}\n`;
+    msg += `*Método de Pago:* ${formData.metodoPago === 'anticipado' ? 'Pago Anticipado (Nequi / Bancolombia / Daviplata / Llave)' : 'Pago Contra Entrega'}\n`;
+    if (formData.notas) msg += `*Notas:* ${formData.notas}\n`;
+    
+    msg += `\n*RESUMEN DEL PEDIDO:*\n`;
+    cart.forEach(item => {
+      msg += `• ${item.quantity}x ${item.name} - ${formatPrice(item.price * item.quantity)}\n`;
+      if (item.customNote) msg += `  └ _Detalle:_ ${item.customNote}\n`;
+    });
+
+    const costoEnvio = formData.metodoPago === 'anticipado' ? 18000 : 20000;
+    msg += `\n*Subtotal:* ${formatPrice(cartSubtotal)}`;
+    msg += `\n*Envío:* ${formatPrice(costoEnvio)}`;
+    msg += `\n*TOTAL A PAGAR:* ${formatPrice(cartSubtotal + costoEnvio)}`;
+
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    setCurrentRoute('success');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FBFBFB] text-[#111111] font-sans antialiased flex flex-col selection:bg-black selection:text-white">
+      
+      {/* 1. BARRA DE ANUNCIO EN MOVIMIENTO CONTINUO (MARQUESINA) */}
+      <div className="bg-[#111111] text-[#FFFFFF] text-[11px] py-2 overflow-hidden whitespace-nowrap border-b border-[#222222]">
+        <div className="inline-block animate-marquee tracking-[0.2em] uppercase font-light">
+          ENVÍOS A TODO COLOMBIA &nbsp;&bull;&nbsp; COMPRA 100% SEGURA &nbsp;&bull;&nbsp; PIEZAS PERSONALIZADAS CON SIGNIFICADO &nbsp;&bull;&nbsp; ENVÍOS A TODO COLOMBIA &nbsp;&bull;&nbsp; COMPRA 100% SEGURA &nbsp;&bull;&nbsp; PIEZAS PERSONALIZADAS CON SIGNIFICADO &nbsp;&bull;&nbsp;
         </div>
-    </header>
+      </div>
 
-    <!-- HERO SECTION -->
-    <section class="bg-neutral-100 py-12 sm:py-16 border-b border-neutral-200">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <span class="text-xs uppercase tracking-widest bg-neutral-200 text-neutral-700 px-3 py-1 rounded-full font-semibold">Colección Esencial</span>
-            <h1 class="text-3xl sm:text-5xl font-bold text-neutral-900 mt-4 mb-4 tracking-tight">Lleva lo que amas siempre cerca</h1>
-            <p class="text-neutral-600 text-sm sm:text-base max-w-xl mx-auto mb-6">Accesorios con miradas personalizadas, cuadros y detalles diseñados con un significado eterno.</p>
-            <a href="#catalogo" class="inline-block bg-neutral-900 text-white px-6 py-3 rounded-full font-medium text-sm hover:bg-neutral-800 transition shadow-sm">Ver Catálogo</a>
-        </div>
-    </section>
-
-    <!-- CONTENIDO PRINCIPAL Y FILTROS -->
-    <main id="catalogo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="{ tab: 'Todos', search: '' }">
-        
-        <!-- BARRA DE FILTROS Y BUSCADOR -->
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-            <div class="flex flex-wrap gap-2 justify-center">
-                <template x-for="cat in categories">
-                    <button @click="tab = cat" 
-                            :class="tab === cat ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'"
-                            class="px-4 py-2 rounded-full text-sm font-medium transition" 
-                            x-text="cat"></button>
-                </template>
-            </div>
-            <div class="w-full md:w-72">
-                <input type="text" x-model="search" placeholder="Buscar productos..." class="w-full px-4 py-2 rounded-full border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white">
-            </div>
-        </div>
-
-        <!-- GRILLA DE PRODUCTOS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <template x-for="product in filteredProducts(tab, search)" :key="product.id">
-                <div class="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
-                    <div>
-                        <div class="relative h-64 bg-neutral-100 overflow-hidden">
-                            <img :src="product.image" :alt="product.name" class="w-full h-full object-cover">
-                            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-neutral-900 text-xs px-3 py-1 rounded-full font-medium shadow-sm" x-text="product.category"></span>
-                        </div>
-                        <div class="p-4">
-                            <h3 class="font-semibold text-neutral-900 text-base mb-1" x-text="product.name"></h3>
-                            <p class="text-neutral-500 text-xs mb-3 line-clamp-2" x-text="product.description"></p>
-                            <span class="text-neutral-900 font-bold text-lg" x-text="formatPrice(product.price)"></span>
-                        </div>
-                    </div>
-                    <div class="p-4 pt-0">
-                        <button @click="addToCart(product)" class="w-full bg-neutral-900 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-neutral-800 transition flex items-center justify-center gap-2">
-                            <span>Agregar al Carrito</span>
-                        </button>
-                    </div>
-                </div>
-            </template>
-        </div>
-    </main>
-
-    <!-- CARRITO LATERAL (MODAL) -->
-    <div x-show="cartOpen" class="fixed inset-0 z-50 overflow-hidden" style="display: none;">
-        <div class="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm" @click="cartOpen = false"></div>
-        <div class="absolute inset-y-0 right-0 max-w-full flex">
-            <div class="w-screen max-w-md bg-white shadow-xl flex flex-col">
-                <div class="p-6 border-b border-neutral-200 flex items-center justify-between">
-                    <h2 class="text-lg font-bold text-neutral-900">Tu Carrito</h2>
-                    <button @click="cartOpen = false" class="text-neutral-400 hover:text-neutral-600 text-xl font-bold">✕</button>
-                </div>
-                <div class="flex-1 overflow-y-auto p-6 space-y-4">
-                    <template x-if="cart.length === 0">
-                        <p class="text-neutral-500 text-center py-10 text-sm">Tu carrito está vacío.</p>
-                    </template>
-                    <template x-for="item in cart" :key="item.id">
-                        <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
-                            <div>
-                                <h4 class="font-medium text-sm text-neutral-900" x-text="item.name"></h4>
-                                <span class="text-xs text-neutral-500" x-text="formatPrice(item.price)"></span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-sm font-semibold" x-text="item.quantity"></span>
-                                <button @click="removeFromCart(item.id)" class="text-red-500 text-xs hover:underline">Eliminar</button>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                <div class="p-6 border-t border-neutral-200 bg-neutral-50">
-                    <div class="flex justify-between mb-4 font-semibold text-neutral-900">
-                        <span>Total:</span>
-                        <span x-text="formatPrice(cartTotal)"></span>
-                    </div>
-                    <button @click="checkoutWhatsApp" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium text-sm hover:bg-neutral-800 transition text-center block">
-                        Finalizar Pedido por WhatsApp
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- LOGICA DE LA TIENDA -->
-    <script>
-        function store() {
-            return {
-                cartOpen: false,
-                categories: ['Todos', 'Joyas de Miradas', 'Cuadros Personalizados', 'Llaveros e Imanes', 'Velas & Eventos'],
-                products: [
-                    { id: 1, name: 'Collar con Mirada Personalizada', category: 'Joyas de Miradas', price: 35000, slug: 'collar-mirada', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop', description: 'Inmortaliza la mirada de esa persona especial o mascota en un dije delicado con resina.', customizable: true },
-                    { id: 2, name: 'Pulsera Ajustable de Ojo Personalizado', category: 'Joyas de Miradas', price: 28000, slug: 'pulsera-mirada', image: 'https://images.unsplash.com/photo-1611591470671-3078415ab55e?q=80&w=600&auto=format&fit=crop', description: 'Manilla fina de hilo neutro con el centro de la mirada elegida. Llévalo siempre contigo.', customizable: true },
-                    { id: 3, name: 'Cuadro Minimalista en Blanco y Negro', category: 'Cuadros Personalizados', price: 45000, slug: 'cuadro-minimalista', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=600&auto=format&fit=crop', description: 'Cuadro personalizado con tu foto favorita en diseño limpio y elegante estilo galería.', customizable: true },
-                    { id: 4, name: 'Llavero con Inicial y Relieve', category: 'Llaveros e Imanes', price: 18000, slug: 'llavero-inicial', image: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=600&auto=format&fit=crop', description: 'Llavero sobrio en tonos grises o negros con inicial personalizada y detalle minimalista.', customizable: true },
-                    { id: 5, name: 'Set de Velas Aromáticas para Eventos (Min. 20 u.)', category: 'Velas & Eventos', price: 12000, slug: 'velas-eventos', image: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=600&auto=format&fit=crop', description: 'Velas de soya natural en envase sobrio con etiqueta personalizada para matrimonios, grados o marcas.', customizable: true }
-                ],
-                cart: [],
-                filteredProducts(tab, search) {
-                    return this.products.filter(p => {
-                        let matchesCategory = (tab === 'Todos' || p.category === tab);
-                        let matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase());
-                        return matchesCategory && matchesSearch;
-                    });
-                },
-                addToCart(product) {
-                    let existing = this.cart.find(item => item.id === product.id);
-                    if (existing) {
-                        existing.quantity++;
-                    } else {
-                        this.cart.push({ ...product, quantity: 1 });
-                    }
-                    this.cartOpen = true;
-                },
-                removeFromCart(id) {
-                    this.cart = this.cart.filter(item => item.id !== id);
-                },
-                get cartCount() {
-                    return this.cart.reduce((sum, item) => sum + item.quantity, 0);
-                },
-                get cartTotal() {
-                    return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                },
-                formatPrice(value) {
-                    return '$ ' + value.toLocaleString('es-CO');
-                },
-                checkoutWhatsApp() {
-                    let phone = '573000000000'; // Reemplaza con tu número de WhatsApp
-                    let text = "¡Hola! Vínculo ✨ Me gustaría hacer el siguiente pedido:\n\n";
-                    this.cart.forEach(item => {
-                        text += `- ${item.quantity}x ${item.name} ($ ${item.price.toLocaleString('es-CO')})\n`;
-                    });
-                    text += `\n*Total a pagar:* $ ${this.cartTotal.toLocaleString('es-CO')}`;
-                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
-                }
-            }
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
         }
-    </script>
-</body>
-</html>
+        .animate-marquee {
+          display: inline-block;
+          white-space: nowrap;
+          animation: marquee 25s linear infinite;
+        }
+      `}</style>
+
+      {/* 2. BARRA DE NAVEGACIÓN PRINCIPAL */}
+      <header className="sticky top-0 z-40 bg-[#FBFBFB]/95 backdrop-blur-md border-b border-[#EFEFEF]">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          
+          {/* Navegación izquierda */}
+          <div className="flex items-center space-x-4">
+            {currentRoute !== 'catalog' ? (
+              <button 
+                onClick={() => setCurrentRoute('catalog')} 
+                className="flex items-center gap-2 text-xs text-[#666666] hover:text-[#111111] transition uppercase tracking-wider font-light"
+              >
+                <ArrowLeft className="w-4 h-4 stroke-[1.5]" />
+                <span className="hidden sm:inline">Volver al Catálogo</span>
+              </button>
+            ) : (
+              <span className="text-[11px] uppercase tracking-widest text-[#888888]">Colección 2026</span>
+            )}
+          </div>
+
+          {/* Nombre de Marca Centrado */}
+          <div className="text-center cursor-pointer" onClick={() => setCurrentRoute('catalog')}>
+            <h1 className="text-2xl font-light tracking-[0.35em] uppercase text-[#111111] font-serif">
+              VÍNCULO
+            </h1>
+            <p className="text-[8px] tracking-[0.3em] text-[#888888] uppercase font-sans mt-0.5">
+              Jewelry & Keepsakes
+            </p>
+          </div>
+
+          {/* Carrito a la derecha */}
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setCurrentRoute('cart')}
+              className="relative flex items-center gap-2 text-xs tracking-widest uppercase text-[#111111] hover:text-[#666666] transition font-medium"
+            >
+              <span className="hidden sm:inline">Carrito</span>
+              <ShoppingBag className="w-5 h-5 stroke-[1.2]" />
+              {totalCartCount > 0 && (
+                <span className="bg-[#111111] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-mono">
+                  {totalCartCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      {/* CONTENIDO PRINCIPAL SEGÚN RUTA */}
+      <main className="flex-1">
+
+        {/* ------------------------------------------------------------- */}
+        {/* RUTA 1: VISTA DE CATÁLOGO PRINCIPAL                           */}
+        {/* ------------------------------------------------------------- */}
+        {currentRoute === 'catalog' && (
+          <div>
+            {/* BANNER RECTILÍNEO SOBRIO */}
+            <section className="border-b border-[#EFEFEF] py-16 px-6 bg-white">
+              <div className="max-w-3xl mx-auto text-center space-y-4">
+                <span className="text-[10px] uppercase tracking-[0.3em] text-[#888888] font-mono">
+                  Diseño de Autor
+                </span>
+                <h2 className="text-3xl md:text-4xl font-light tracking-wide text-[#111111] font-serif leading-tight">
+                  Lleva lo que amas siempre cerca
+                </h2>
+                <p className="text-xs text-[#666666] font-light leading-relaxed max-w-lg mx-auto">
+                  Piezas personalizadas con miradas reales, fotografías procesadas en alto contraste e imprenta fina.
+                </p>
+              </div>
+            </section>
+
+            <div className="max-w-7xl mx-auto px-6 py-12">
+              <div className="flex flex-col md:flex-row gap-10">
+                
+                {/* Menú de categorías lateral */}
+                <aside className="w-full md:w-56 shrink-0">
+                  <div className="sticky top-28 space-y-6">
+                    <div className="flex items-center justify-between border-b border-[#111111] pb-2">
+                      <h3 className="text-xs uppercase tracking-[0.2em] font-medium text-[#111111]">
+                        Categorías
+                      </h3>
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-[#888888]" />
+                    </div>
+                    <nav className="flex flex-row md:flex-col flex-wrap gap-2 md:gap-3 text-xs">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => setSelectedCategory(cat)}
+                          className={`text-left tracking-wide transition py-1 ${
+                            selectedCategory === cat
+                              ? 'text-[#111111] font-medium md:border-l-2 border-[#111111] md:pl-3 border-b md:border-b-0'
+                              : 'text-[#888888] hover:text-[#111111] md:pl-3'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                </aside>
+
+                {/* Grid de productos */}
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-6 pb-3 border-b border-[#EFEFEF]">
+                    <span className="text-xs uppercase tracking-widest text-[#888888]">
+                      Mostrando: <strong className="text-[#111111] font-normal">{selectedCategory}</strong>
+                    </span>
+                    <span className="text-xs text-[#888888] font-mono">
+                      {filteredProducts.length} productos
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+                    {filteredProducts.map((product) => (
+                      <div 
+                        key={product.id} 
+                        className="group flex flex-col justify-between cursor-pointer"
+                        onClick={() => navigateToProduct(product.id)}
+                      >
+                        <div>
+                          {/* Fotografía del producto */}
+                          <div className="relative aspect-square bg-[#F4F4F4] overflow-hidden border border-[#E5E5E5]">
+                            <img 
+                              src={product.image} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover object-center grayscale contrast-125 group-hover:scale-105 group-hover:grayscale-0 transition duration-700 ease-out"
+                            />
+                            <span className="absolute top-3 left-3 text-[9px] uppercase tracking-widest bg-white/95 px-2 py-1 text-[#111111] font-mono border border-[#EFEFEF]">
+                              {product.tag}
+                            </span>
+                          </div>
+
+                          {/* Info del producto */}
+                          <div className="mt-4 space-y-1">
+                            <p className="text-[10px] uppercase tracking-widest text-[#888888]">
+                              {product.category}
+                            </p>
+                            <h4 className="text-sm font-light tracking-wide text-[#111111] group-hover:text-[#666666] transition">
+                              {product.name}
+                            </h4>
+                            <p className="text-xs font-mono text-[#111111] pt-1">
+                              {formatPrice(product.price)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Botón ver detalles */}
+                        <div className="mt-4 w-full border border-[#111111] text-[#111111] py-2.5 text-xs tracking-widest uppercase group-hover:bg-[#111111] group-hover:text-white transition duration-300 font-medium text-center">
+                          Ver Detalle & Personalizar
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* RUTA 2: VISTA DETALLE DE PRODUCTO (/producto/:slug)          */}
+        {/* ------------------------------------------------------------- */}
+        {currentRoute === 'product' && (
+          <div className="max-w-6xl mx-auto px-6 py-12">
+            <div className="flex flex-col md:flex-row gap-12">
+              
+              {/* Columna Izquierda: Galería de Fotos Grandes */}
+              <div className="w-full md:w-1/2 space-y-4">
+                <div className="aspect-square bg-[#F4F4F4] border border-[#E5E5E5] overflow-hidden">
+                  <img 
+                    src={currentProduct.image} 
+                    alt={currentProduct.name} 
+                    className="w-full h-full object-cover grayscale contrast-125 hover:grayscale-0 transition duration-500"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="aspect-square bg-[#F4F4F4] border border-[#111111] overflow-hidden cursor-pointer">
+                    <img src={currentProduct.image} alt="Thumbnail 1" className="w-full h-full object-cover grayscale" />
+                  </div>
+                  <div className="aspect-square bg-[#F4F4F4] border border-[#E5E5E5] overflow-hidden opacity-60 hover:opacity-100 transition cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=400&auto=format&fit=crop" alt="Thumbnail 2" className="w-full h-full object-cover grayscale" />
+                  </div>
+                  <div className="aspect-square bg-[#F4F4F4] border border-[#E5E5E5] overflow-hidden opacity-60 hover:opacity-100 transition cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=400&auto=format&fit=crop" alt="Thumbnail 3" className="w-full h-full object-cover grayscale" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Columna Derecha: Especificaciones y Personalización */}
+              <div className="w-full md:w-1/2 flex flex-col justify-between space-y-6">
+                
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-[0.25em] text-[#888888] font-mono">
+                      {currentProduct.category}
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-light tracking-wide text-[#111111] font-serif mt-1">
+                      {currentProduct.name}
+                    </h2>
+                    <p className="text-lg font-mono text-[#111111] mt-2 font-light">
+                      {formatPrice(currentProduct.price)}
+                    </p>
+                  </div>
+
+                  <div className="border-t border-b border-[#EFEFEF] py-4">
+                    <p className="text-xs text-[#555555] font-light leading-relaxed">
+                      {currentProduct.description}
+                    </p>
+                  </div>
+
+                  {/* CAJA DE PERSONALIZACIÓN INTEGRADA */}
+                  <div className="bg-[#F9F9F9] p-5 border border-[#E5E5E5] space-y-4">
+                    <h4 className="text-xs uppercase tracking-widest font-medium text-[#111111]">
+                      Personalización del Pedido
+                    </h4>
+
+                    {(currentProduct.customizationType === 'photo' || currentProduct.customizationType === 'photo_text') && (
+                      <div className="space-y-2">
+                        <label className="text-[11px] text-[#666666] block font-light">
+                          Cargar Fotografía o Mirada (JPG, PNG):
+                        </label>
+                        <div 
+                          onClick={() => setCustomFileUploaded(true)}
+                          className={`border border-dashed p-4 text-center cursor-pointer transition ${
+                            customFileUploaded 
+                              ? 'border-black bg-white text-black' 
+                              : 'border-[#CCCCCC] hover:border-[#111111] bg-white text-[#888888]'
+                          }`}
+                        >
+                          {customFileUploaded ? (
+                            <div className="flex items-center justify-center gap-2 text-xs">
+                              <CheckCircle2 className="w-4 h-4 text-black" />
+                              <span className="font-medium">Fotografía "mirada_especial.jpg" adjuntada</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1">
+                              <Upload className="w-4 h-4 text-[#888888]" />
+                              <span className="text-xs font-light">Haz clic aquí para seleccionar tu foto</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {(currentProduct.customizationType === 'text' || currentProduct.customizationType === 'photo_text') && (
+                      <div className="space-y-2">
+                        <label className="text-[11px] text-[#666666] block font-light">
+                          Texto, Iniciales o Coordenadas a Grabar:
+                        </label>
+                        <input
+                          type="text"
+                          value={customText}
+                          onChange={(e) => setCustomText(e.target.value)}
+                          placeholder="Ej: A & M · 12.04.2023"
+                          className="w-full bg-white border border-[#E5E5E5] px-3 py-2 text-xs focus:outline-none focus:border-[#111111] font-mono"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* DETALLES DE PRODUCTO */}
+                  <div className="space-y-2">
+                    <span className="text-[11px] uppercase tracking-wider text-[#888888] font-medium block">
+                      Especificaciones Técnicas:
+                    </span>
+                    <ul className="text-xs text-[#666666] space-y-1 font-light list-disc list-inside">
+                      {currentProduct.details.map((detail, idx) => (
+                        <li key={idx}>{detail}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* BOTÓN AGREGAR AL CARRITO */}
+                <div className="space-y-3 pt-4">
+                  <button
+                    onClick={() => addToCart(currentProduct)}
+                    className="w-full bg-[#111111] text-white py-4 text-xs tracking-[0.2em] uppercase hover:bg-[#333333] transition duration-300 font-medium flex items-center justify-center gap-2"
+                  >
+                    <ShoppingBag className="w-4 h-4 stroke-[1.2]" />
+                    <span>Agregar al Carrito — {formatPrice(currentProduct.price)}</span>
+                  </button>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-[#888888] pt-2 border-t border-[#EFEFEF] text-center">
+                    <div className="flex items-center justify-center gap-1.5 py-1">
+                      <Truck className="w-3.5 h-3.5" />
+                      <span>Envíos Nacionales</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5 py-1">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Garantía de Calidad</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* RUTA 3: VISTA DE CARRITO DE COMPRAS (/carrito)                */}
+        {/* ------------------------------------------------------------- */}
+        {currentRoute === 'cart' && (
+          <div className="max-w-4xl mx-auto px-6 py-12">
+            <h2 className="text-2xl font-light tracking-wide text-[#111111] font-serif border-b border-[#EFEFEF] pb-4 mb-8 text-center sm:text-left">
+              Carrito de Compras
+            </h2>
+
+            {cart.length === 0 ? (
+              <div className="text-center py-20 space-y-4 border border-dashed border-[#E5E5E5] bg-white">
+                <ShoppingBag className="w-8 h-8 mx-auto text-[#CCCCCC] stroke-[1]" />
+                <p className="text-xs uppercase tracking-widest text-[#888888]">Tu carrito de compras está vacío</p>
+                <button
+                  onClick={() => setCurrentRoute('catalog')}
+                  className="mt-4 inline-block bg-[#111111] text-white px-6 py-3 text-xs tracking-widest uppercase hover:bg-[#333333] transition"
+                >
+                  Explorar Catálogo
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                
+                {/* LISTA DE ÍTEMS EN EL CARRITO */}
+                <div className="bg-white border border-[#E5E5E5] divide-y divide-[#EFEFEF]">
+                  {cart.map((item) => (
+                    <div key={item.id} className="p-6 flex flex-col sm:flex-row items-center gap-6 justify-between">
+                      <div className="flex items-center gap-5 w-full sm:w-auto">
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-20 h-20 object-cover bg-[#F4F4F4] border border-[#E5E5E5] grayscale" 
+                        />
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase tracking-widest text-[#888888]">
+                            {item.category}
+                          </span>
+                          <h3 className="text-sm font-light text-[#111111]">{item.name}</h3>
+                          <p className="text-xs font-mono text-[#111111]">{formatPrice(item.price)} c/u</p>
+                          {item.customNote && (
+                            <p className="text-[10px] text-[#666666] font-mono bg-[#F5F5F5] px-2 py-0.5 inline-block">
+                              {item.customNote}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Control de Cantidad y Botón Eliminar */}
+                      <div className="flex items-center gap-8 justify-between w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-[#EFEFEF]">
+                        <div className="flex items-center border border-[#E5E5E5]">
+                          <button 
+                            onClick={() => updateQuantity(item.id, -1)}
+                            className="px-3 py-1 text-xs hover:bg-[#F4F4F4] transition"
+                          >
+                            -
+                          </button>
+                          <span className="px-3 py-1 text-xs font-mono font-medium">{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, 1)}
+                            className="px-3 py-1 text-xs hover:bg-[#F4F4F4] transition"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="text-right font-mono text-xs font-medium">
+                          {formatPrice(item.price * item.quantity)}
+                        </div>
+
+                        <button 
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-[#888888] hover:text-red-600 transition p-1"
+                          title="Eliminar producto"
+                        >
+                          <Trash2 className="w-4 h-4 stroke-[1.5]" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* RESUMEN DE TOTALES Y CONTINUAR A CHECKOUT */}
+                <div className="bg-[#F9F9F9] p-6 border border-[#E5E5E5] flex flex-col sm:flex-row justify-between items-center gap-6">
+                  <div className="space-y-1 text-center sm:text-left">
+                    <span className="text-xs uppercase tracking-wider text-[#888888]">Subtotal estimado:</span>
+                    <p className="text-xl font-mono font-light text-[#111111]">{formatPrice(cartSubtotal)}</p>
+                    <p className="text-[10px] text-[#888888] font-light">Costos de envío calculados en el siguiente paso.</p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <button
+                      onClick={() => setCurrentRoute('catalog')}
+                      className="px-6 py-3.5 border border-[#111111] text-[#111111] text-xs tracking-widest uppercase hover:bg-white transition text-center"
+                    >
+                      Seguir Comprando
+                    </button>
+                    <button
+                      onClick={() => setCurrentRoute('checkout')}
+                      className="px-8 py-3.5 bg-[#111111] text-white text-xs tracking-[0.2em] uppercase hover:bg-[#333333] transition flex items-center justify-center gap-2 text-center"
+                    >
+                      <span>Finalizar Compra</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* RUTA 4: VISTA DE CHECKOUT DE DATOS (/checkout)                */}
+        {/* ------------------------------------------------------------- */}
+        {currentRoute === 'checkout' && (
+          <div className="max-w-4xl mx-auto px-6 py-12">
+            <h2 className="text-2xl font-light tracking-wide text-[#111111] font-serif border-b border-[#EFEFEF] pb-4 mb-8">
+              Datos de Envío & Finalizar Compra
+            </h2>
+
+            <form onSubmit={handleSendWhatsApp} className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              
+              {/* Formulario a la izquierda (2 columnas) */}
+              <div className="md:col-span-2 space-y-6">
+                
+                <div className="bg-white p-6 border border-[#E5E5E5] space-y-4">
+                  <h3 className="text-xs uppercase tracking-widest font-medium text-[#111111] border-b border-[#EFEFEF] pb-2">
+                    1. Información del Destinatario
+                  </h3>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="block text-[#666666] mb-1 font-light">Nombre Completo *</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={formData.nombre}
+                        onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                        placeholder="Ej: Sofía Mendoza" 
+                        className="w-full bg-[#FBFBFB] border border-[#E5E5E5] px-3 py-2.5 focus:outline-none focus:border-[#111111]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[#666666] mb-1 font-light">WhatsApp de Contacto *</label>
+                        <input 
+                          type="tel" 
+                          required
+                          value={formData.telefono}
+                          onChange={e => setFormData({ ...formData, telefono: e.target.value })}
+                          placeholder="Ej: 300 123 4567" 
+                          className="w-full bg-[#FBFBFB] border border-[#E5E5E5] px-3 py-2.5 focus:outline-none focus:border-[#111111]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[#666666] mb-1 font-light">Ciudad / Municipio *</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={formData.ciudad}
+                          onChange={e => setFormData({ ...formData, ciudad: e.target.value })}
+                          placeholder="Ej: Bogotá D.C." 
+                          className="w-full bg-[#FBFBFB] border border-[#E5E5E5] px-3 py-2.5 focus:outline-none focus:border-[#111111]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[#666666] mb-1 font-light">Dirección de Entrega Completa *</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={formData.direccion}
+                        onChange={e => setFormData({ ...formData, direccion: e.target.value })}
+                        placeholder="Ej: Calle 93 # 12-45 Apto 302" 
+                        className="w-full bg-[#FBFBFB] border border-[#E5E5E5] px-3 py-2.5 focus:outline-none focus:border-[#111111]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#666666] mb-1 font-light">Notas adicionales para la entrega (Opcional)</label>
+                      <textarea 
+                        rows={2}
+                        value={formData.notas}
+                        onChange={e => setFormData({ ...formData, notas: e.target.value })}
+                        placeholder="Instrucciones de portería o referencia visual..." 
+                        className="w-full bg-[#FBFBFB] border border-[#E5E5E5] px-3 py-2 focus:outline-none focus:border-[#111111]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 border border-[#E5E5E5] space-y-4">
+                  <h3 className="text-xs uppercase tracking-widest font-medium text-[#111111] border-b border-[#EFEFEF] pb-2">
+                    2. Selección de Método de Envío & Pago
+                  </h3>
+
+                  <div className="space-y-3 text-xs">
+                    <label 
+                      className={`flex items-center justify-between p-4 border cursor-pointer transition ${
+                        formData.metodoPago === 'anticipado' ? 'border-[#111111] bg-[#FBFBFB]' : 'border-[#E5E5E5]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="radio" 
+                          name="metodoPago" 
+                          value="anticipado"
+                          checked={formData.metodoPago === 'anticipado'}
+                          onChange={e => setFormData({ ...formData, metodoPago: e.target.value })}
+                          className="accent-[#111111]"
+                        />
+                        <div>
+                          <p className="font-medium text-[#111111]">Pago Anticipado (Nequi / Bancolombia / Daviplata / Llave)</p>
+                          <p className="text-[10px] text-[#666666] font-light">Envío nacional prioritario más económico</p>
+                        </div>
+                      </div>
+                      <span className="font-mono font-medium">$18.000</span>
+                    </label>
+
+                    <label 
+                      className={`flex items-center justify-between p-4 border cursor-pointer transition ${
+                        formData.metodoPago === 'contraentrega' ? 'border-[#111111] bg-[#FBFBFB]' : 'border-[#E5E5E5]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="radio" 
+                          name="metodoPago" 
+                          value="contraentrega"
+                          checked={formData.metodoPago === 'contraentrega'}
+                          onChange={e => setFormData({ ...formData, metodoPago: e.target.value })}
+                          className="accent-[#111111]"
+                        />
+                        <div>
+                          <p className="font-medium text-[#111111]">Pago Contra Entrega</p>
+                          <p className="text-[10px] text-[#666666] font-light">Pagas en efectivo al recibir el paquete en tu puerta</p>
+                        </div>
+                      </div>
+                      <span className="font-mono font-medium">$20.000</span>
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Columna Derecha: Resumen de Compra Final */}
+              <div className="space-y-6">
+                <div className="bg-[#F9F9F9] p-6 border border-[#E5E5E5] space-y-4 sticky top-28">
+                  <h3 className="text-xs uppercase tracking-widest font-medium text-[#111111] border-b border-[#E5E5E5] pb-2">
+                    Resumen del Pedido
+                  </h3>
+
+                  <div className="space-y-3 text-xs">
+                    {cart.map(item => (
+                      <div key={item.id} className="flex justify-between items-start text-[#555555]">
+                        <span className="line-clamp-1">{item.quantity}x {item.name}</span>
+                        <span className="font-mono text-[#111111] shrink-0 ml-2">{formatPrice(item.price * item.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-[#E5E5E5] pt-3 space-y-2 text-xs">
+                    <div className="flex justify-between text-[#666666]">
+                      <span>Subtotal</span>
+                      <span className="font-mono">{formatPrice(cartSubtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-[#666666]">
+                      <span>Envío ({formData.metodoPago === 'anticipado' ? 'Anticipado' : 'Contra Entrega'})</span>
+                      <span className="font-mono">
+                        {formatPrice(formData.metodoPago === 'anticipado' ? 18000 : 20000)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[#111111] font-medium text-sm pt-2 border-t border-[#E5E5E5]">
+                      <span>TOTAL FINAL</span>
+                      <span className="font-mono">
+                        {formatPrice(cartSubtotal + (formData.metodoPago === 'anticipado' ? 18000 : 20000))}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-[#111111] text-white py-4 text-xs tracking-[0.2em] uppercase hover:bg-[#333333] transition duration-300 font-medium flex items-center justify-center gap-2 mt-4"
+                  >
+                    <span>Confirmar Pedido vía WhatsApp</span>
+                  </button>
+
+                  <p className="text-[10px] text-[#888888] text-center font-light leading-normal">
+                    Al hacer clic se abrirá tu WhatsApp con el mensaje estructurado de tu pedido listo para enviar.
+                  </p>
+                </div>
+              </div>
+
+            </form>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* RUTA 5: VISTA DE ÉXITO / CONFIRMACIÓN                        */}
+        {/* ------------------------------------------------------------- */}
+        {currentRoute === 'success' && (
+          <div className="max-w-xl mx-auto px-6 py-20 text-center space-y-6">
+            <CheckCircle2 className="w-16 h-16 mx-auto text-[#111111] stroke-[1]" />
+            <h2 className="text-3xl font-light tracking-wide font-serif text-[#111111]">
+              ¡Gracias por elegir VÍNCULO!
+            </h2>
+            <p className="text-xs text-[#666666] font-light leading-relaxed">
+              Tu pedido ha sido redirigido a nuestro equipo por WhatsApp. Te atenderemos en breves minutos para revisar el detalle de la mirada/fotografía personalizada y dar inicio a la elaboración.
+            </p>
+            <div className="pt-6">
+              <button
+                onClick={() => {
+                  setCart([]);
+                  setCurrentRoute('catalog');
+                }}
+                className="bg-[#111111] text-white px-8 py-3.5 text-xs tracking-widest uppercase hover:bg-[#333333] transition"
+              >
+                Volver al Inicio
+              </button>
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* FOOTER SOBRIO */}
+      <footer className="bg-white border-t border-[#EFEFEF] py-12 px-6 text-xs text-[#888888] mt-16">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-center md:text-left space-y-1">
+            <p className="tracking-[0.25em] text-[#111111] uppercase font-serif font-light">VÍNCULO</p>
+            <p className="text-[10px] text-[#AAAAAA]">© {new Date().getFullYear()} VÍNCULO. Todos los derechos reservados.</p>
+          </div>
+          <div className="flex gap-6 text-[11px] tracking-wider uppercase">
+            <a href="#" className="hover:text-[#111111] transition">Términos & Condiciones</a>
+            <a href="#" className="hover:text-[#111111] transition">Envíos Colombia</a>
+            <a href="#" className="hover:text-[#111111] transition">Atención WhatsApp</a>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
