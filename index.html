@@ -30,19 +30,19 @@
         <div class="animate-marquee">
             <span class="mx-6">✨ ENVÍOS A TODO COLOMBIA</span>
             <span class="mx-6">•</span>
+            <span class="mx-6">PAGO ANTICIPADO ($18.000) O CONTRA ENTREGA ($22.000)</span>
+            <span class="mx-6">•</span>
             <span class="mx-6">PIEZAS ÚNICAS CON SIGNIFICADO</span>
             <span class="mx-6">•</span>
             <span class="mx-6">COMPRA 100% SEGURA</span>
-            <span class="mx-6">•</span>
-            <span class="mx-6">PAGO ANTICIPADO O CONTRA ENTREGA</span>
             <span class="mx-6">•</span>
             <span class="mx-6">✨ ENVÍOS A TODO COLOMBIA</span>
             <span class="mx-6">•</span>
+            <span class="mx-6">PAGO ANTICIPADO ($18.000) O CONTRA ENTREGA ($22.000)</span>
+            <span class="mx-6">•</span>
             <span class="mx-6">PIEZAS ÚNICAS CON SIGNIFICADO</span>
             <span class="mx-6">•</span>
             <span class="mx-6">COMPRA 100% SEGURA</span>
-            <span class="mx-6">•</span>
-            <span class="mx-6">PAGO ANTICIPADO O CONTRA ENTREGA</span>
         </div>
     </div>
 
@@ -67,14 +67,12 @@
 
     <!-- VISTA 1: CATÁLOGO -->
     <main x-show="currentView === 'catalog'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
-        <!-- BANNER DE ENCABEZADO -->
         <div class="bg-white border border-neutral-200 p-8 sm:p-12 mb-10 text-center max-w-4xl mx-auto">
             <span class="text-[10px] tracking-widest uppercase font-bold text-neutral-400 bg-neutral-100 px-3 py-1 rounded-full">Colección Exclusiva</span>
             <h1 class="text-3xl sm:text-5xl font-light text-neutral-900 mt-4 mb-4 tracking-tight">Lleva lo que amas siempre cerca</h1>
             <p class="text-neutral-500 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">Piezas artesanales personalizadas creadas para inmortalizar miradas, momentos y seres queridos.</p>
         </div>
 
-        <!-- FILTROS Y BÚSQUEDA -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 border-b border-neutral-200 pb-6">
             <div class="flex flex-wrap gap-2 justify-center">
                 <template x-for="cat in categories" :key="cat">
@@ -89,7 +87,6 @@
             </div>
         </div>
 
-        <!-- GRILLA DE PRODUCTOS -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <template x-for="product in filteredProducts()" :key="product.id">
                 <div class="bg-white border border-neutral-200 overflow-hidden group hover:border-neutral-400 transition flex flex-col justify-between">
@@ -227,11 +224,17 @@
                     <div class="space-y-2">
                         <label class="flex items-center gap-3 border p-3 cursor-pointer text-xs" :class="checkoutForm.shipping === 'anticipado' ? 'border-neutral-900 bg-neutral-50 font-semibold' : 'border-neutral-200'">
                             <input type="radio" name="shipping" value="anticipado" x-model="checkoutForm.shipping">
-                            <span>Pago Anticipado (Nequi, Bancolombia, Daviplata, Llave)</span>
+                            <div>
+                                <span class="block">Pago Anticipado (Nequi, Bancolombia, Daviplata, Llave)</span>
+                                <span class="text-[11px] text-neutral-500">Envío: $18.000</span>
+                            </div>
                         </label>
                         <label class="flex items-center gap-3 border p-3 cursor-pointer text-xs" :class="checkoutForm.shipping === 'contraentrega' ? 'border-neutral-900 bg-neutral-50 font-semibold' : 'border-neutral-200'">
                             <input type="radio" name="shipping" value="contraentrega" x-model="checkoutForm.shipping">
-                            <span>Pago Contra Entrega al Recibir</span>
+                            <div>
+                                <span class="block">Pago Contra Entrega al Recibir</span>
+                                <span class="text-[11px] text-neutral-500">Envío: $22.000</span>
+                            </div>
                         </label>
                     </div>
                 </div>
@@ -256,12 +259,16 @@
                     </div>
                     <div class="border-t border-neutral-200 pt-4 space-y-2 text-xs">
                         <div class="flex justify-between text-neutral-600">
-                            <span>Productos:</span>
+                            <span>Subtotal Productos:</span>
                             <span x-text="formatPrice(cartTotal)"></span>
                         </div>
+                        <div class="flex justify-between text-neutral-600">
+                            <span>Costo de Envío:</span>
+                            <span x-text="formatPrice(shippingCost)"></span>
+                        </div>
                         <div class="flex justify-between font-bold text-base text-neutral-900 pt-2 border-t border-neutral-100">
-                            <span>Total a Confirmar:</span>
-                            <span x-text="formatPrice(cartTotal)"></span>
+                            <span>Total a Pagar:</span>
+                            <span x-text="formatPrice(grandTotal)"></span>
                         </div>
                     </div>
                 </div>
@@ -355,6 +362,12 @@
                 get cartTotal() {
                     return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 },
+                get shippingCost() {
+                    return this.checkoutForm.shipping === 'anticipado' ? 18000 : 22000;
+                },
+                get grandTotal() {
+                    return this.cartTotal + this.shippingCost;
+                },
                 formatPrice(val) {
                     return '$ ' + val.toLocaleString('es-CO');
                 },
@@ -364,18 +377,23 @@
                         return;
                     }
                     let phone = '573000000000'; // Reemplaza con tu número de WhatsApp
+                    let shippingTypeText = this.checkoutForm.shipping === 'anticipado' 
+                        ? 'Pago Anticipado (Nequi, Bancolombia, Daviplata, Llave) - Envío: $18.000' 
+                        : 'Pago Contra Entrega - Envío: $22.000';
+
                     let text = `✨ *NUEVO PEDIDO EN VÍNCULO* ✨\n\n`;
                     text += `👤 *Cliente:* ${this.checkoutForm.name}\n`;
                     text += `📱 *WhatsApp:* ${this.checkoutForm.phone}\n`;
                     text += `📍 *Ciudad:* ${this.checkoutForm.city}\n`;
                     text += `🏠 *Dirección:* ${this.checkoutForm.address}\n`;
-                    text += `💳 *Método de Pago:* ${this.checkoutForm.shipping === 'anticipado' ? 'Pago Anticipado (Nequi, Bancolombia, Daviplata, Llave)' : 'Pago Contra Entrega'}\n\n`;
+                    text += `💳 *Método de Pago:* ${shippingTypeText}\n\n`;
                     text += `🛒 *PRODUCTOS:* \n`;
                     this.cart.forEach(item => {
                         text += `- ${item.quantity}x ${item.name} (${this.formatPrice(item.price * item.quantity)})\n`;
                         if (item.note) text += `  └ *Nota:* ${item.note}\n`;
                     });
-                    text += `\n💰 *TOTAL:* ${this.formatPrice(this.cartTotal)}`;
+                    text += `\n📦 *Envío:* ${this.formatPrice(this.shippingCost)}`;
+                    text += `\n💰 *TOTAL A PAGAR:* ${this.formatPrice(this.grandTotal)}`;
                     
                     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
                 }
