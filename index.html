@@ -105,4 +105,282 @@
                         </div>
                     </div>
                     <div class="p-6 pt-0 flex gap-2">
-                        <button @click="openProduct(product)" class="flex-1 border border-neutral-900 text-neutral-900 py-
+                        <button @click="openProduct(product)" class="flex-1 border border-neutral-900 text-neutral-900 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 hover:text-white transition">Ver Detalles</button>
+                        <button @click="addToCartDirect(product)" class="bg-neutral-900 text-white px-4 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 transition">Añadir</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </main>
+
+    <!-- VISTA 2: DETALLE DE PRODUCTO -->
+    <main x-show="currentView === 'product' && selectedProduct" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+        <button @click="currentView = 'catalog'" class="text-xs font-semibold tracking-wider uppercase text-neutral-500 hover:text-neutral-900 mb-6 flex items-center gap-2">
+            ← Volver al Catálogo
+        </button>
+        <template x-if="selectedProduct">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 bg-white border border-neutral-200 p-6 sm:p-10">
+                <div class="aspect-square overflow-hidden bg-neutral-100">
+                    <img :src="selectedProduct.image" :alt="selectedProduct.name" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] tracking-widest uppercase font-bold text-neutral-400 bg-neutral-100 px-3 py-1 rounded-full" x-text="selectedProduct.category"></span>
+                        <h1 class="text-2xl sm:text-4xl font-bold text-neutral-900 mt-3 mb-2" x-text="selectedProduct.name"></h1>
+                        <p class="text-2xl font-bold text-neutral-900 mb-6" x-text="formatPrice(selectedProduct.price)"></p>
+                        <p class="text-neutral-600 text-sm leading-relaxed mb-6 border-t border-b border-neutral-100 py-4" x-text="selectedProduct.description"></p>
+                        
+                        <div x-show="selectedProduct.customizable" class="mb-6 bg-neutral-50 p-4 border border-neutral-200">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-2">Instrucciones de Personalización:</label>
+                            <textarea x-model="customNote" placeholder="Ej: Foto del ojo enviada por WhatsApp, inicial 'M', o fecha especial..." class="w-full p-3 border border-neutral-300 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white" rows="3"></textarea>
+                            <p class="text-[11px] text-neutral-500 mt-2">✨ Una vez finalices el pedido, podrás adjuntar la fotografía directamente por WhatsApp.</p>
+                        </div>
+                    </div>
+
+                    <button @click="addToCartFromDetail()" class="w-full bg-neutral-900 text-white py-4 text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition mt-4">
+                        Agregar al Carrito
+                    </button>
+                </div>
+            </div>
+        </template>
+    </main>
+
+    <!-- VISTA 3: CARRITO -->
+    <main x-show="currentView === 'cart'" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight mb-8">Mi Carrito de Compras</h1>
+        
+        <template x-if="cart.length === 0">
+            <div class="bg-white border border-neutral-200 p-12 text-center">
+                <p class="text-neutral-500 text-sm mb-6">Tu carrito está completamente vacío.</p>
+                <button @click="currentView = 'catalog'" class="bg-neutral-900 text-white px-6 py-3 text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition">Explorar Productos</button>
+            </div>
+        </template>
+
+        <template x-if="cart.length > 0">
+            <div class="space-y-6">
+                <div class="bg-white border border-neutral-200 divide-y divide-neutral-100">
+                    <template x-for="item in cart" :key="item.id">
+                        <div class="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-4 w-full sm:w-auto">
+                                <img :src="item.image" :alt="item.name" class="w-16 h-16 object-cover bg-neutral-100 border border-neutral-200">
+                                <div>
+                                    <h3 class="font-semibold text-sm text-neutral-900" x-text="item.name"></h3>
+                                    <p class="text-xs text-neutral-500" x-text="formatPrice(item.price)"></p>
+                                    <template x-if="item.note">
+                                        <p class="text-[11px] text-neutral-400 italic mt-1" x-text="'Nota: ' + item.note"></p>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                <div class="flex items-center border border-neutral-200">
+                                    <button @click="updateQuantity(item.id, -1)" class="px-3 py-1 text-neutral-600 hover:bg-neutral-100">-</button>
+                                    <span class="px-3 py-1 text-xs font-bold" x-text="item.quantity"></span>
+                                    <button @click="updateQuantity(item.id, 1)" class="px-3 py-1 text-neutral-600 hover:bg-neutral-100">+</button>
+                                </div>
+                                <span class="font-bold text-sm text-neutral-900" x-text="formatPrice(item.price * item.quantity)"></span>
+                                <button @click="removeFromCart(item.id)" class="text-red-500 text-xs hover:underline uppercase font-bold">Eliminar</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="bg-white border border-neutral-200 p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <span class="text-xs text-neutral-500 uppercase tracking-wider">Subtotal estimado:</span>
+                        <p class="text-2xl font-bold text-neutral-900" x-text="formatPrice(cartTotal)"></p>
+                    </div>
+                    <div class="flex gap-3 w-full sm:w-auto">
+                        <button @click="currentView = 'catalog'" class="border border-neutral-300 px-6 py-3 text-xs font-bold uppercase tracking-wider hover:bg-neutral-100 transition flex-1 sm:flex-none">Seguir Comprando</button>
+                        <button @click="currentView = 'checkout'" class="bg-neutral-900 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition flex-1 sm:flex-none">Ir al Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </main>
+
+    <!-- VISTA 4: FINALIZAR COMPRA (CHECKOUT) -->
+    <main x-show="currentView === 'checkout'" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight mb-8">Finalizar Pedido</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- FORMULARIO DE ENVÍO -->
+            <div class="bg-white border border-neutral-200 p-6 space-y-4">
+                <h2 class="font-bold text-sm uppercase tracking-wider text-neutral-900 border-b border-neutral-100 pb-3">Datos de Entrega</h2>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Nombre Completo *</label>
+                    <input type="text" x-model="checkoutForm.name" class="w-full p-2.5 border border-neutral-300 text-xs focus:ring-1 focus:ring-neutral-900 bg-white" placeholder="Ej: Laura Gómez">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Número de WhatsApp *</label>
+                    <input type="tel" x-model="checkoutForm.phone" class="w-full p-2.5 border border-neutral-300 text-xs focus:ring-1 focus:ring-neutral-900 bg-white" placeholder="Ej: 300 123 4567">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Ciudad / Municipio *</label>
+                    <input type="text" x-model="checkoutForm.city" class="w-full p-2.5 border border-neutral-300 text-xs focus:ring-1 focus:ring-neutral-900 bg-white" placeholder="Ej: Medellín, Antioquia">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Dirección Exacta *</label>
+                    <input type="text" x-model="checkoutForm.address" class="w-full p-2.5 border border-neutral-300 text-xs focus:ring-1 focus:ring-neutral-900 bg-white" placeholder="Ej: Calle 10 # 40 - 20, Apto 301">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-2">Método de Envío y Pago *</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 border p-3 cursor-pointer text-xs" :class="checkoutForm.shipping === 'anticipado' ? 'border-neutral-900 bg-neutral-50 font-semibold' : 'border-neutral-200'">
+                            <input type="radio" name="shipping" value="anticipado" x-model="checkoutForm.shipping">
+                            <span>Pago Anticipado (Nequi, Bancolombia, Daviplata, Llave)</span>
+                        </label>
+                        <label class="flex items-center gap-3 border p-3 cursor-pointer text-xs" :class="checkoutForm.shipping === 'contraentrega' ? 'border-neutral-900 bg-neutral-50 font-semibold' : 'border-neutral-200'">
+                            <input type="radio" name="shipping" value="contraentrega" x-model="checkoutForm.shipping">
+                            <span>Pago Contra Entrega al Recibir</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESUMEN DEL PEDIDO -->
+            <div class="bg-white border border-neutral-200 p-6 flex flex-col justify-between">
+                <div>
+                    <h2 class="font-bold text-sm uppercase tracking-wider text-neutral-900 border-b border-neutral-100 pb-3 mb-4">Resumen del Pedido</h2>
+                    <div class="space-y-3 max-h-60 overflow-y-auto mb-6 pr-2">
+                        <template x-for="item in cart" :key="item.id">
+                            <div class="flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="font-medium text-neutral-900" x-text="item.quantity + 'x ' + item.name"></span>
+                                    <template x-if="item.note">
+                                        <p class="text-[10px] text-neutral-400 italic" x-text="item.note"></p>
+                                    </template>
+                                </div>
+                                <span class="font-bold text-neutral-900" x-text="formatPrice(item.price * item.quantity)"></span>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="border-t border-neutral-200 pt-4 space-y-2 text-xs">
+                        <div class="flex justify-between text-neutral-600">
+                            <span>Productos:</span>
+                            <span x-text="formatPrice(cartTotal)"></span>
+                        </div>
+                        <div class="flex justify-between font-bold text-base text-neutral-900 pt-2 border-t border-neutral-100">
+                            <span>Total a Confirmar:</span>
+                            <span x-text="formatPrice(cartTotal)"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button @click="submitToWhatsApp()" class="w-full bg-neutral-900 text-white py-4 text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition text-center block">
+                        Confirmar y Enviar a WhatsApp
+                    </button>
+                    <p class="text-[10px] text-neutral-400 text-center mt-3">Al hacer clic serás redirigido a WhatsApp para coordinar el pago y envío de la foto.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER SOBRIO -->
+    <footer class="bg-white border-t border-neutral-200 py-8 text-center text-xs text-neutral-400 mt-auto">
+        <p class="tracking-widest uppercase font-semibold text-neutral-900 mb-1">VÍNCULO</p>
+        <p>© 2026 VÍNCULO. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- LÓGICA DE TIENDA CON ALPINE JS -->
+    <script>
+        function store() {
+            return {
+                currentView: 'catalog',
+                selectedCategory: 'Todos',
+                searchQuery: '',
+                selectedProduct: null,
+                customNote: '',
+                categories: ['Todos', 'Joyas de Miradas', 'Cuadros Personalizados', 'Llaveros e Imanes'],
+                products: [
+                    { id: 1, name: 'Pulsera Mirada Dual Personalizada', category: 'Joyas de Miradas', price: 38000, image: 'https://images.unsplash.com/photo-1611591470671-3078415ab55e?q=80&w=600&auto=format&fit=crop', description: 'Pulsera ajustadora dorada que une dos miradas únicas (pareja, amigos o familiares) en dijes de alta definición.', customizable: true },
+                    { id: 2, name: 'Collar con Mirada Personalizada', category: 'Joyas de Miradas', price: 35000, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop', description: 'Inmortaliza la mirada de esa persona especial en un dije con cristal protector y acabados finos.', customizable: true },
+                    { id: 3, name: 'Collar Ojo de Mascota', category: 'Joyas de Miradas', price: 35000, image: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=600&auto=format&fit=crop', description: 'Lleva la mirada de tu peludito (perro o gato) en un dije protector para no separarte jamás de él.', customizable: true },
+                    { id: 4, name: 'Cuadro Pareja Lego & Fecha', category: 'Cuadros Personalizados', price: 48000, image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=600&auto=format&fit=crop', description: 'Cuadro 3D con figuras estilo Lego personalizadas, fecha especial y reproductor con canción favorita.', customizable: true },
+                    { id: 5, name: 'Cuadro Mascota Relieve Escultórico', category: 'Cuadros Personalizados', price: 55000, image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=600&auto=format&fit=crop', description: 'Retrato tridimensional moldeado artesanalmente con el rostro de tu mascota sobre marco de madera pura.', customizable: true },
+                    { id: 6, name: 'Llavero Mascota Moldeada + Patita', category: 'Llaveros e Imanes', price: 22000, image: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=600&auto=format&fit=crop', description: 'Llavero detallado con la carita de tu mascota modelada a mano, huesito y patita decorativa.', customizable: true },
+                    { id: 7, name: 'Llavero Canino + Foto Mini', category: 'Llaveros e Imanes', price: 24000, image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=600&auto=format&fit=crop', description: 'Llavero de arcilla modelada acompañado de una minicámara Polaroid personalizada con la foto de tu mascota.', customizable: true },
+                    { id: 8, name: 'Imán 3D Carita de Vaca', category: 'Llaveros e Imanes', price: 15000, image: 'https://images.unsplash.com/photo-1560807707-8cc77767d783?q=80&w=600&auto=format&fit=crop', description: 'Imán artesanal esculpido en resina para nevera u oficina con acabado mate.', customizable: false },
+                    { id: 9, name: 'Set Imanes Temáticos Artesanales', category: 'Llaveros e Imanes', price: 28000, image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=600&auto=format&fit=crop', description: 'Colección de imanes hechos a mano ideales para personalizar cualquier superficie metálica.', customizable: false }
+                ],
+                cart: [],
+                checkoutForm: {
+                    name: '',
+                    phone: '',
+                    city: '',
+                    address: '',
+                    shipping: 'anticipado'
+                },
+                filteredProducts() {
+                    return this.products.filter(p => {
+                        let matchCat = (this.selectedCategory === 'Todos' || p.category === this.selectedCategory);
+                        let matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || p.description.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        return matchCat && matchSearch;
+                    });
+                },
+                openProduct(product) {
+                    this.selectedProduct = product;
+                    this.customNote = '';
+                    this.currentView = 'product';
+                },
+                addToCartDirect(product) {
+                    let existing = this.cart.find(i => i.id === product.id && !i.note);
+                    if (existing) {
+                        existing.quantity++;
+                    } else {
+                        this.cart.push({ ...product, quantity: 1, note: '' });
+                    }
+                    this.currentView = 'cart';
+                },
+                addToCartFromDetail() {
+                    if (!this.selectedProduct) return;
+                    this.cart.push({ ...this.selectedProduct, quantity: 1, note: this.customNote });
+                    this.currentView = 'cart';
+                },
+                updateQuantity(id, delta) {
+                    let item = this.cart.find(i => i.id === id);
+                    if (item) {
+                        item.quantity += delta;
+                        if (item.quantity <= 0) {
+                            this.removeFromCart(id);
+                        }
+                    }
+                },
+                removeFromCart(id) {
+                    this.cart = this.cart.filter(i => i.id !== id);
+                },
+                get cartCount() {
+                    return this.cart.reduce((sum, item) => sum + item.quantity, 0);
+                },
+                get cartTotal() {
+                    return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                },
+                formatPrice(val) {
+                    return '$ ' + val.toLocaleString('es-CO');
+                },
+                submitToWhatsApp() {
+                    if (!this.checkoutForm.name || !this.checkoutForm.phone || !this.checkoutForm.address) {
+                        alert('Por favor completa los campos obligatorios para el envío.');
+                        return;
+                    }
+                    let phone = '573000000000'; // Reemplaza con tu número de WhatsApp
+                    let text = `✨ *NUEVO PEDIDO EN VÍNCULO* ✨\n\n`;
+                    text += `👤 *Cliente:* ${this.checkoutForm.name}\n`;
+                    text += `📱 *WhatsApp:* ${this.checkoutForm.phone}\n`;
+                    text += `📍 *Ciudad:* ${this.checkoutForm.city}\n`;
+                    text += `🏠 *Dirección:* ${this.checkoutForm.address}\n`;
+                    text += `💳 *Método de Pago:* ${this.checkoutForm.shipping === 'anticipado' ? 'Pago Anticipado (Nequi, Bancolombia, Daviplata, Llave)' : 'Pago Contra Entrega'}\n\n`;
+                    text += `🛒 *PRODUCTOS:* \n`;
+                    this.cart.forEach(item => {
+                        text += `- ${item.quantity}x ${item.name} (${this.formatPrice(item.price * item.quantity)})\n`;
+                        if (item.note) text += `  └ *Nota:* ${item.note}\n`;
+                    });
+                    text += `\n💰 *TOTAL:* ${this.formatPrice(this.cartTotal)}`;
+                    
+                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
